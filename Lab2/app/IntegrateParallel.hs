@@ -10,7 +10,9 @@ integrateParallel :: (Double -> Double) -> Double -> Double -> Double -> Int -> 
 integrateParallel f start end epsilon workerCount =
   integrateParallelRecursive initialSegmentCount Nothing
   where
-    initialSegmentCount = ceiling $ (end - start) * 10
+    -- initialSegmentCount is calculated based on formula:
+    -- https://en.wikipedia.org/wiki/Trapezoidal_rule#Error_analysis
+    initialSegmentCount = ceiling $ sqrt ((end - start) ** 3 / (12 * epsilon))
 
     integrateParallelRecursive segmentCount prevResult = do
       curResult <- integrateParallelImpl segmentCount
@@ -27,7 +29,7 @@ integrateParallel f start end epsilon workerCount =
             workerChunkSizes = getChunkSizes workerCount segmentCount
 
             integrateSequential segmentCount (start, end) resultsChan = do
-              _ <- result `seq` pure () -- forcing result evaluation
+              _ <- result `seq` pure () -- forcing result evaluation, so speed up from using threads is achieved
               writeChan resultsChan result
               where
                 integrateSegment = \(a, b) -> (f a + f b) / 2 * (b - a)

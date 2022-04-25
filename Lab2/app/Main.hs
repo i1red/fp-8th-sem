@@ -18,6 +18,6 @@ main = do
       putStrLn $ "\tresult: " ++ show result
       where
         f = (\x -> abs (x / 10) ** 0.125)
-        start = -10 ** 6
-        end = 10 ** 6
-        epsilon = 1
+        start = -2e4
+        end = 2e4
+        epsilon = 1e-2
