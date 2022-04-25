@@ -15,7 +15,14 @@ splitIntoChunks chunkCount list = splitPlacesBlanks chunkSizes list
   where
     baseChunkSize = length list `div` chunkCount
     enlargedChunkCount = length list `rem` chunkCount
-    chunkSizes = replicate enlargedChunkCount (baseChunkSize + 1) ++ replicate (chunkCount - enlargedChunkCount) baseChunkSize
+    chunkSizes = getChunkSizes chunkCount (length list)
+
+getChunkSizes :: Int -> Int -> [Int]
+getChunkSizes chunkCount listLength =
+  replicate enlargedChunkCount (baseChunkSize + 1) ++ replicate (chunkCount - enlargedChunkCount) baseChunkSize
+  where
+    baseChunkSize = listLength `div` chunkCount
+    enlargedChunkCount = listLength `rem` chunkCount
 
 timeIoAction :: IO a -> IO (NominalDiffTime, a)
 timeIoAction calculation = do
