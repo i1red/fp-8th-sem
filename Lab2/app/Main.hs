@@ -17,7 +17,7 @@ main = do
       putStrLn $ "\ttime: " ++ show time
       putStrLn $ "\tresult: " ++ show result
       where
-        f = ((* (-0.05)) . (** 3)) . (** 2)
-        start = -10
-        end = 10
-        epsilon = 10e-8
+        f = (\x -> abs (x / 10) ** 0.125)
+        start = -10 ** 6
+        end = 10 ** 6
+        epsilon = 1

@@ -10,13 +10,6 @@ segmentRange start end count =
     segmentLen = (end - start) / fromIntegral count
     nthSegment n = (\k -> (start + (k - 1) * segmentLen, start + k * segmentLen)) $ fromIntegral n
 
-splitIntoChunks :: Int -> [a] -> [[a]]
-splitIntoChunks chunkCount list = splitPlacesBlanks chunkSizes list
-  where
-    baseChunkSize = length list `div` chunkCount
-    enlargedChunkCount = length list `rem` chunkCount
-    chunkSizes = getChunkSizes chunkCount (length list)
-
 getChunkSizes :: Int -> Int -> [Int]
 getChunkSizes chunkCount listLength =
   replicate enlargedChunkCount (baseChunkSize + 1) ++ replicate (chunkCount - enlargedChunkCount) baseChunkSize

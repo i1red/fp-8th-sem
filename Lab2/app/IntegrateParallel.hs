@@ -4,7 +4,7 @@ import Control.Concurrent (forkIO, forkOS, forkOn, getChanContents, newChan, wri
 import Data.Foldable (for_)
 import Data.Maybe (fromJust, isJust)
 import GHC.Conc (getNumCapabilities)
-import Utils (segmentRange, splitIntoChunks, getChunkSizes)
+import Utils (getChunkSizes, segmentRange)
 
 integrateParallel :: (Double -> Double) -> Double -> Double -> Double -> Int -> IO Double
 integrateParallel f start end epsilon workerCount =
@@ -26,7 +26,8 @@ integrateParallel f start end epsilon workerCount =
             workerSubRanges = segmentRange start end workerCount
             workerChunkSizes = getChunkSizes workerCount segmentCount
 
-            integrateSequential segmentCount (start, end) resultsChan = 
+            integrateSequential segmentCount (start, end) resultsChan = do
+              _ <- result `seq` pure () -- forcing result evaluation
               writeChan resultsChan result
               where
                 integrateSegment = \(a, b) -> (f a + f b) / 2 * (b - a)
