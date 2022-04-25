@@ -1,8 +1,9 @@
 module IntegrateParallel where
 
-import Data.Maybe (isJust, fromJust)
-import Control.Concurrent (getChanContents, newChan, writeChan)
-import GHC.Conc (forkIO)
+import Control.Concurrent (forkIO, forkOS, forkOn, getChanContents, newChan, writeChan)
+import Data.Foldable (for_)
+import Data.Maybe (fromJust, isJust)
+import GHC.Conc (getNumCapabilities)
 import Utils (segmentRange, splitIntoChunks)
 
 integrateParallel :: (Double -> Double) -> Double -> Double -> Double -> Int -> IO Double
@@ -19,7 +20,7 @@ integrateParallel f start end epsilon workerCount =
       where
         integrateParallelImpl segmentCount = do
           resultsChan <- newChan
-          mapM_ (\chunk -> forkIO $ integrateSequential chunk resultsChan) segmentChunks
+          mapM_ (\(workerNo, chunk) -> forkOn workerNo $ integrateSequential chunk resultsChan) (zip (iterate (+1) 0) segmentChunks)
           fmap (sum . take workerCount) (getChanContents resultsChan)
           where
             segmentChunks = splitIntoChunks workerCount (segmentRange start end segmentCount)

@@ -12,7 +12,7 @@ executable Lab2
     build-depends:    
         base ^>=4.14.3.0,
         split,
-        timeit
+        time,
     hs-source-dirs:   
         app
     default-language: 
