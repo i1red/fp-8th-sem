@@ -1,10 +1,9 @@
 module Main where
 
-import Control.Monad.IO.Class (MonadIO)
 import Data.Foldable (for_)
 import GHC.Conc (numCapabilities)
 import IntegrateParallel (integrateParallel)
-import Utils (timeIoAction)
+import Utils (timeIt)
 
 main :: IO ()
 main = do
@@ -13,7 +12,7 @@ main = do
   where
     printTimings workerCount = do
       putStrLn $ "workers=" ++ show workerCount
-      (time, result) <- timeIoAction $ integrateParallel f start end epsilon workerCount
+      (time, result) <- timeIt $ integrateParallel f start end epsilon workerCount
       putStrLn $ "\ttime: " ++ show time
       putStrLn $ "\tresult: " ++ show result
       where

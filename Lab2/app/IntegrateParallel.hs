@@ -1,12 +1,11 @@
 module IntegrateParallel where
 
-import Control.Concurrent (forkIO, forkOS, forkOn, getChanContents, newChan, writeChan)
-import Data.Foldable (for_)
+import Control.Parallel.Strategies (parMap, rseq)
 import Data.Maybe (fromJust, isJust)
 import GHC.Conc (getNumCapabilities)
 import Utils (getChunkSizes, segmentRange)
 
-integrateParallel :: (Double -> Double) -> Double -> Double -> Double -> Int -> IO Double
+integrateParallel :: (Double -> Double) -> Double -> Double -> Double -> Int -> Double
 integrateParallel f start end epsilon workerCount =
   integrateParallelRecursive initialSegmentCount Nothing
   where
@@ -14,23 +13,21 @@ integrateParallel f start end epsilon workerCount =
     -- https://en.wikipedia.org/wiki/Trapezoidal_rule#Error_analysis
     initialSegmentCount = ceiling $ sqrt ((end - start) ** 3 / (12 * epsilon))
 
-    integrateParallelRecursive segmentCount prevResult = do
-      curResult <- integrateParallelImpl segmentCount
-      if isJust prevResult && abs (curResult - fromJust prevResult) <= epsilon
-        then return curResult
-        else integrateParallelRecursive (segmentCount * 2) (Just curResult)
+    integrateParallelRecursive segmentCount prevResult
+      | isPrecise = curResult
+      | otherwise = integrateParallelRecursive (segmentCount * 2) (Just curResult)
       where
-        integrateParallelImpl segmentCount = do
-          resultsChan <- newChan
-          mapM_ (\(chunkSize, subRange) -> forkIO $ integrateSequential chunkSize subRange resultsChan) (zip workerChunkSizes workerSubRanges)
-          fmap (sum . take workerCount) (getChanContents resultsChan)
+        curResult = integrateParallelImpl segmentCount
+        isPrecise = isJust prevResult && abs (curResult - fromJust prevResult) <= epsilon
+
+        integrateParallelImpl segmentCount =
+          sum $ parMap rseq (uncurry integrateSequential) (zip workerChunkSizes workerSubRanges)
           where
             workerSubRanges = segmentRange start end workerCount
             workerChunkSizes = getChunkSizes workerCount segmentCount
 
-            integrateSequential segmentCount (start, end) resultsChan = do
-              _ <- result `seq` pure () -- forcing result evaluation, so speed up from using threads is achieved
-              writeChan resultsChan result
+            integrateSequential segmentCount (start, end) = 
+              sum $ map integrateSegment segments
               where
                 integrateSegment = \(a, b) -> (f a + f b) / 2 * (b - a)
-                result = sum $ map integrateSegment (segmentRange start end segmentCount)
+                segments = segmentRange start end segmentCount

@@ -17,9 +17,9 @@ getChunkSizes chunkCount listLength =
     baseChunkSize = listLength `div` chunkCount
     enlargedChunkCount = listLength `rem` chunkCount
 
-timeIoAction :: IO a -> IO (NominalDiffTime, a)
-timeIoAction calculation = do
+timeIt :: a -> IO (NominalDiffTime, a)
+timeIt calculation = do
   t0 <- getCurrentTime
-  result <- calculation
+  let result = calculation
   t1 <- result `seq` getCurrentTime
   return (diffUTCTime t1 t0, result)
